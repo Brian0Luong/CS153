@@ -30,7 +30,13 @@ public class Scanner
         
         // Skip blanks and other whitespace characters.
         while (Character.isWhitespace(ch)) ch = source.nextChar();
-        
+        while (ch == '{') {
+        	while (ch != '}') {
+        		ch = source.nextChar();
+        	}
+        	ch = source.nextChar();
+        	while (Character.isWhitespace(ch)) ch = source.nextChar();
+        }
         if (Character.isLetter(ch))     return Token.word(ch, source);
         else if (Character.isDigit(ch)) return Token.number(ch, source);
         else if (ch == '\'')            return Token.string(ch, source);
