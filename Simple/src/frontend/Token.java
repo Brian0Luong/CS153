@@ -184,7 +184,19 @@ public class Token
         switch (firstChar)
         {
             // One-character special symbols.
-            case '.' : token.type = TokenType.PERIOD;     break;
+            case '.' : 
+            {
+            	char nextChar = source.nextChar();
+            	if(nextChar == '.') {
+            		token.text += '.';
+            		token.type = TokenType.DOT_DOT;
+            	}
+            	else {
+            		token.type = TokenType.PERIOD;
+            		return token;
+            	}
+            	break;
+            }
             case ',' : token.type = TokenType.COMMA;      break;
             case ';' : token.type = TokenType.SEMICOLON;  break;
             case '+' : token.type = TokenType.PLUS;       break;
@@ -192,9 +204,24 @@ public class Token
             case '*' : token.type = TokenType.STAR;       break;
             case '/' : token.type = TokenType.SLASH;      break;
             case '=' : token.type = TokenType.EQUALS;     break;
-            case '<' : token.type = TokenType.LESS_THAN;  break;
+            case '>' : 
+            {
+            	char nextChar = source.nextChar();
+            	if (nextChar == '=') {
+            		token.text += '=';
+            		token.type = TokenType.GREATER_EQUALS;
+            	}
+            	else {
+            		token.type = TokenType.GREATER_THAN;
+            		return token;
+            	}
+            	break;
+            }
             case '(' : token.type = TokenType.LPAREN;     break;
             case ')' : token.type = TokenType.RPAREN;     break;
+            case '[' : token.type = TokenType.LBRACKET;	  break;
+            case ']' : token.type = TokenType.RBRACKET;   break;
+            case '^' : token.type = TokenType.CARAT;	  break;
             
             // One- or two-character special symbols.
             case ':' : 
@@ -216,6 +243,23 @@ public class Token
                 }
 
                 break;
+            }
+            case '<' :
+            {
+            	char nextChar = source.nextChar();
+            	if (nextChar == '>' ) {
+            		token.text += '>';
+            		token.type = TokenType.NOT_EQUALS;
+            	}
+            	else if (nextChar == '=') {
+            		token.text += '=';
+            		token.type = TokenType.LESS_EQUALS;
+            	}
+            	else {
+            		token.type = TokenType.LESS_THAN;
+            		return token;
+            	}
+            	break;
             }
             
             case Source.EOF : token.type = TokenType.END_OF_FILE; break;
