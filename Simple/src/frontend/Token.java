@@ -153,13 +153,26 @@ public class Token
 
         // Loop to append the rest of the characters of the string,
         // up to but not including the closing quote.
-        for (char ch = source.nextChar(); ch != '\''; ch = source.nextChar())
-        {
-            token.text += ch;
+        boolean complete = false;
+        while (!complete) {
+            char ch = source.nextChar();
+
+            if (ch != '\'') {
+                token.text += ch;
+            }
+            else { //if '' then represents the character ' and not a closing quote
+                ch = source.nextChar();
+                if (ch =='\'') {
+                    token.text += ch;
+                }
+                else {
+                    complete = true;
+                }
+            }
         }
         
         // Append the closing ' and consume it.
-        token.text += '\'';  
+        token.text += '\'';
         source.nextChar();
         
         token.type = TokenType.STRING;
