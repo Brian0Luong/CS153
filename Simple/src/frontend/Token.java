@@ -128,7 +128,19 @@ public class Token
             token.type  = TokenType.REAL;
             token.value = Double.parseDouble(token.text);
         }
-        
+        // DOT_DOT Future Encounter
+        else if (pointCount == 2) {
+        	token.type = TokenType.INTEGER;
+        	Token sc = new Token(firstChar);
+            for (char ch = source.nextChar();
+                    Character.isDigit(ch);
+                    ch = source.nextChar())
+               {
+                   sc.text += ch;
+               }
+        	token.value = Long.parseLong(sc.text);
+        }
+           
         else
         {
             token.type = TokenType.ERROR;
