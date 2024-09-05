@@ -30,7 +30,7 @@ public class Token
         LBRACKET, RBRACKET, CARAT,
         
         IDENTIFIER, INTEGER, REAL, CHARACTER, STRING, 
-        END_OF_FILE, ERROR
+        END_OF_FILE, ERROR, UNDERSCORE
     }
     
     /**
@@ -216,6 +216,7 @@ public class Token
             case '-' : token.type = TokenType.MINUS;      break;
             case '*' : token.type = TokenType.STAR;       break;
             case '/' : token.type = TokenType.SLASH;      break;
+            case '_' : token.type = TokenType.UNDERSCORE; break;    
             case '=' : token.type = TokenType.EQUALS;     break;
             case '>' : 
             {
