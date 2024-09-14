@@ -13,6 +13,7 @@ import intermediate.*;
 import static frontend.Token.TokenType.*;
 import static intermediate.Node.NodeType.*;
 import static intermediate.Node.NodeType.IF;
+import static intermediate.Node.NodeType.WHILE;
 
 public class Parser
 {
@@ -93,6 +94,7 @@ public class Parser
         statementStarters.add(IDENTIFIER);
         statementStarters.add(REPEAT);
         statementStarters.add(Token.TokenType.IF);
+	statementStarters.add(Token.TokenType.WHILE);
         
         // Tokens that can immediately follow a statement.
         statementFollowers.add(SEMICOLON);
@@ -101,6 +103,7 @@ public class Parser
         statementFollowers.add(END_OF_FILE);
         statementFollowers.add(THEN);
         statementFollowers.add(ELSE);
+	statementFollowers.add(DO);
         
         relationalOperators.add(EQUALS);
         relationalOperators.add(NOT_EQUALS);
@@ -288,6 +291,25 @@ private Node parseAssignmentStatement()
         else syntaxError("Expecting UNTIL");
         
         return loopNode;
+    }
+
+   private Node parseWhileStatement() {
+    	
+    	Node whileNode = new Node(WHILE);
+    	
+    	whileNode.lineNumber = currentToken.lineNumber;
+    	
+    	currentToken = scanner.nextToken();
+    	
+    	whileNode.adopt(parseExpression());
+    	
+    	if (currentToken.type == DO) {
+    		currentToken = scanner.nextToken();
+    		whileNode.adopt(parseStatement());
+    	}
+    	else syntaxError("Expecting DO");
+    	
+    	return whileNode;
     }
     
     private Node parseWriteStatement()
