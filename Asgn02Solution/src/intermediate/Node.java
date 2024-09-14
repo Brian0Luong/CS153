@@ -17,7 +17,7 @@ public class Node
         ADD, SUBTRACT, MULTIPLY, DIVIDE, EQ, NEQ, LT, GT, LEQ, GEQ,
         VARIABLE, INTEGER_CONSTANT, REAL_CONSTANT, STRING_CONSTANT,
 
-        IF
+        IF, WHILE, FOR, CASE,
     }
 
     public NodeType type;
