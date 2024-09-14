@@ -12,6 +12,7 @@ import java.util.HashSet;
 import intermediate.*;
 import static frontend.Token.TokenType.*;
 import static intermediate.Node.NodeType.*;
+import static intermediate.Node.NodeType.IF;
 
 public class Parser
 {
@@ -91,18 +92,27 @@ public class Parser
         statementStarters.add(BEGIN);
         statementStarters.add(IDENTIFIER);
         statementStarters.add(REPEAT);
+        statementStarters.add(Token.TokenType.IF);
         
         // Tokens that can immediately follow a statement.
         statementFollowers.add(SEMICOLON);
         statementFollowers.add(END);
         statementFollowers.add(UNTIL);
         statementFollowers.add(END_OF_FILE);
+        statementFollowers.add(THEN);
+        statementFollowers.add(ELSE);
         
         relationalOperators.add(EQUALS);
+        relationalOperators.add(NOT_EQUALS);
         relationalOperators.add(LESS_THAN);
+        relationalOperators.add(GREATER_THAN);
+        relationalOperators.add(LESS_EQUALS);
+        relationalOperators.add(GREATER_EQUALS);
+
         
         simpleExpressionOperators.add(PLUS);
         simpleExpressionOperators.add(MINUS);
+        simpleExpressionOperators.add(DIV);
         
         termOperators.add(STAR);
         termOperators.add(SLASH);
@@ -113,7 +123,6 @@ public class Parser
         Node stmtNode = null;
         int savedLineNumber = currentToken.lineNumber;
         lineNumber = savedLineNumber;
-        
         switch (currentToken.type)
         {
             case IDENTIFIER : 
@@ -128,7 +137,9 @@ public class Parser
             }
             case BEGIN  : stmtNode = parseCompoundStatement(); break;
             case REPEAT : stmtNode = parseRepeatStatement();   break;
-            
+
+            case IF : stmtNode = parseIfStatement(); break;
+
             // Empty statement.
             case SEMICOLON : stmtNode = null; break;  
             
@@ -198,7 +209,7 @@ private Node parseAssignmentStatement()
         
         return compoundNode;
     }
-    
+
     private void parseStatementList(Node parentNode, 
                                     Token.TokenType terminalType)
     {
@@ -224,6 +235,27 @@ private Node parseAssignmentStatement()
         }
     }
 
+
+    private Node parseIfStatement() { ////////////////////////////////////////////////////////////////////////////
+        Node ifNode = new Node(IF);
+        ifNode.lineNumber = currentToken.lineNumber;
+        currentToken = scanner.nextToken();
+        ifNode.adopt(parseExpression());
+            if (currentToken.type == THEN) {
+                currentToken = scanner.nextToken();
+                ifNode.adopt(parseStatement());
+            }
+            else{
+                syntaxError("Expecting THEN");
+            }
+
+        if (currentToken.type == ELSE) {
+            currentToken = scanner.nextToken();
+            ifNode.adopt(parseStatement());
+        }
+        return ifNode;
+    }
+
     private Node parseRepeatStatement()
     {
         // The current token should now be REPEAT.
@@ -232,8 +264,8 @@ private Node parseAssignmentStatement()
         Node loopNode = new Node(LOOP);
         
         // Consume REPEAT
-        currentToken = scanner.nextToken();  
-        
+        currentToken = scanner.nextToken();
+
         parseStatementList(loopNode, UNTIL);    
         
         if (currentToken.type == UNTIL) 
@@ -368,9 +400,13 @@ private Node parseAssignmentStatement()
         if (relationalOperators.contains(currentToken.type))
         {
             Token.TokenType tokenType = currentToken.type;
-            Node opNode = tokenType == EQUALS    ? new Node(EQ)
-                        : tokenType == LESS_THAN ? new Node(LT)
-                        :                          null;
+            Node opNode = tokenType == EQUALS    ?      new Node(EQ)
+                        : tokenType == NOT_EQUALS?      new Node(NEQ)
+                        : tokenType == LESS_THAN ?      new Node(LT)
+                        : tokenType == GREATER_THAN ?   new Node(GT)
+                        : tokenType == LESS_EQUALS ?    new Node(LEQ)
+                        : tokenType == GREATER_EQUALS ? new Node(GEQ)
+                        :                               null;
             
             // Consume relational operator.
             currentToken = scanner.nextToken();  
@@ -401,7 +437,9 @@ private Node parseAssignmentStatement()
         while (simpleExpressionOperators.contains(currentToken.type))
         {
             Node opNode = currentToken.type == PLUS ? new Node(ADD)
-                                                    : new Node(SUBTRACT);
+                        : currentToken.type == MINUS ? new Node(SUBTRACT)
+                        : currentToken.type == DIV ? new Node(DIVIDE)
+                        :                               null;
             // consume the operator.
             currentToken = scanner.nextToken();  
 
