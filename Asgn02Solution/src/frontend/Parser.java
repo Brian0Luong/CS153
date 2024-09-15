@@ -14,6 +14,7 @@ import static frontend.Token.TokenType.*;
 import static intermediate.Node.NodeType.*;
 import static intermediate.Node.NodeType.IF;
 import static intermediate.Node.NodeType.WHILE;
+import static intermediate.Node.NodeType.FOR;
 
 public class Parser
 {
@@ -94,7 +95,8 @@ public class Parser
         statementStarters.add(IDENTIFIER);
         statementStarters.add(REPEAT);
         statementStarters.add(Token.TokenType.IF);
-	statementStarters.add(Token.TokenType.WHILE);
+        statementStarters.add(Token.TokenType.WHILE);
+        statementStarters.add(Token.TokenType.FOR);
         
         // Tokens that can immediately follow a statement.
         statementFollowers.add(SEMICOLON);
@@ -103,7 +105,9 @@ public class Parser
         statementFollowers.add(END_OF_FILE);
         statementFollowers.add(THEN);
         statementFollowers.add(ELSE);
-	statementFollowers.add(DO);
+        statementFollowers.add(DO);
+        statementFollowers.add(TO);
+        statementFollowers.add(DOWNTO);
         
         relationalOperators.add(EQUALS);
         relationalOperators.add(NOT_EQUALS);
@@ -142,6 +146,10 @@ public class Parser
             case REPEAT : stmtNode = parseRepeatStatement();   break;
 
             case IF : stmtNode = parseIfStatement(); break;
+            
+            case WHILE : stmtNode = parseWhileStatement(); break;
+            
+            case FOR : stmtNode = parseForStatement(); break;
 
             // Empty statement.
             case SEMICOLON : stmtNode = null; break;  
@@ -292,8 +300,8 @@ private Node parseAssignmentStatement()
         
         return loopNode;
     }
-
-   private Node parseWhileStatement() {
+    
+    private Node parseWhileStatement() {
     	
     	Node whileNode = new Node(WHILE);
     	
@@ -310,6 +318,37 @@ private Node parseAssignmentStatement()
     	else syntaxError("Expecting DO");
     	
     	return whileNode;
+    }
+    
+    private Node parseForStatement() {
+    	Node forNode = new Node(FOR);
+    	
+    	forNode.lineNumber = currentToken.lineNumber;
+    	
+    	currentToken = scanner.nextToken();
+    	forNode.adopt(parseAssignmentStatement());
+    	
+    	if (currentToken.type == TO) {
+    		currentToken = scanner.nextToken();
+    		forNode.adopt(parseExpression());
+    	}
+    	else if (currentToken.type == DOWNTO) {
+    		currentToken = scanner.nextToken();
+    		forNode.adopt(parseExpression());
+    	}
+    	else {
+    		syntaxError("Expecting TO or DOWNTO");
+    	}
+    	
+    	if (currentToken.type == DO) {
+    		currentToken = scanner.nextToken();
+    		forNode.adopt(parseStatement());
+    	}
+    	else {
+    		syntaxError("Expecting DO");
+    	}
+    	return forNode;
+    	
     }
     
     private Node parseWriteStatement()
@@ -428,6 +467,7 @@ private Node parseAssignmentStatement()
                         : tokenType == GREATER_THAN ?   new Node(GT)
                         : tokenType == LESS_EQUALS ?    new Node(LEQ)
                         : tokenType == GREATER_EQUALS ? new Node(GEQ)
+                        : tokenType == COLON_EQUALS ?   new Node(CEQ)
                         :                               null;
             
             // Consume relational operator.
