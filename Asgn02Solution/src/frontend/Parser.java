@@ -606,7 +606,7 @@ private Node parseAssignmentStatement()
         {
             Node opNode = currentToken.type == PLUS ? new Node(ADD)
                         : currentToken.type == MINUS ? new Node(SUBTRACT)
-                        : currentToken.type == DIV ? new Node(DIVIDE)
+                        : currentToken.type == DIV ? new Node(INTDIV)
                         :                               null;
             // consume the operator.
             currentToken = scanner.nextToken();  
