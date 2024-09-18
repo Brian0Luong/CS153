@@ -14,10 +14,12 @@ public class Node
     public enum NodeType
     {
         PROGRAM, COMPOUND, ASSIGN, LOOP, TEST, WRITE, WRITELN,
-        ADD, SUBTRACT, MULTIPLY, DIVIDE, EQ, NEQ, LT, GT, LEQ, GEQ,
+        ADD, SUBTRACT, MULTIPLY, DIVIDE, EQ, NEQ, LT, GT, LEQ, GEQ, NOT,
         VARIABLE, INTEGER_CONSTANT, REAL_CONSTANT, STRING_CONSTANT,
 
-        IF, WHILE, FOR, CASE, CEQ
+        IF, WHILE, FOR, CASE, CEQ,
+
+        SELECT, SELECT_BRANCH, SELECT_CONSTANTS, UNKNOWN //unknown is a placeholder node if an error occurs
     }
 
     public NodeType type;

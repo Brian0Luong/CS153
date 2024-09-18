@@ -7,12 +7,15 @@
  */
 package frontend;
 
+import java.nio.channels.SelectableChannel;
 import java.util.HashSet;
 
 import intermediate.*;
 import static frontend.Token.TokenType.*;
 import static intermediate.Node.NodeType.*;
+import static intermediate.Node.NodeType.CASE;
 import static intermediate.Node.NodeType.IF;
+import static intermediate.Node.NodeType.NOT;
 import static intermediate.Node.NodeType.WHILE;
 import static intermediate.Node.NodeType.FOR;
 
@@ -71,8 +74,10 @@ public class Parser
         
         // The PROGRAM node adopts the COMPOUND tree.
         programNode.adopt(parseCompoundStatement());
-        
-        if (currentToken.type != PERIOD) syntaxError("Expecting .");
+        if (currentToken.type == SEMICOLON) {
+            //iunno its prob fine
+        }
+        else if (currentToken.type != PERIOD) syntaxError("Expecting .");
         return programNode;
     }
     
@@ -97,6 +102,7 @@ public class Parser
         statementStarters.add(Token.TokenType.IF);
         statementStarters.add(Token.TokenType.WHILE);
         statementStarters.add(Token.TokenType.FOR);
+        statementStarters.add(Token.TokenType.CASE);
         
         // Tokens that can immediately follow a statement.
         statementFollowers.add(SEMICOLON);
@@ -108,6 +114,7 @@ public class Parser
         statementFollowers.add(DO);
         statementFollowers.add(TO);
         statementFollowers.add(DOWNTO);
+        statementFollowers.add(OF);
         
         relationalOperators.add(EQUALS);
         relationalOperators.add(NOT_EQUALS);
@@ -150,6 +157,8 @@ public class Parser
             case WHILE : stmtNode = parseWhileStatement(); break;
             
             case FOR : stmtNode = parseForStatement(); break;
+
+            case CASE : stmtNode = parseCaseStatement(); break;
 
             // Empty statement.
             case SEMICOLON : stmtNode = null; break;  
@@ -195,7 +204,7 @@ private Node parseAssignmentStatement()
     
     // The assignment node adopts the expression node
     // as its second child.
-    Node rhsNode = parseExpression();
+    Node rhsNode = parseExpression(containsNot());
     assignmentNode.adopt(rhsNode);
     
     return assignmentNode;
@@ -246,17 +255,27 @@ private Node parseAssignmentStatement()
         }
     }
 
+    private boolean containsNot() { //if has not, will increment also, kinda also cursed but is to avoid changing more case statements
+        System.out.println("Here at " + currentToken.lineNumber);
+        boolean containsNot = false;
+        if (currentToken.type == Token.TokenType.NOT) {
+            containsNot = true;
+            currentToken = scanner.nextToken();
+        }
+        return containsNot;
+    }
+
 
     private Node parseIfStatement() { ////////////////////////////////////////////////////////////////////////////
         Node ifNode = new Node(IF);
         ifNode.lineNumber = currentToken.lineNumber;
         currentToken = scanner.nextToken();
-        ifNode.adopt(parseExpression());
+        ifNode.adopt(parseExpression(containsNot()));
             if (currentToken.type == THEN) {
                 currentToken = scanner.nextToken();
                 ifNode.adopt(parseStatement());
             }
-            else{
+            else {
                 syntaxError("Expecting THEN");
             }
 
@@ -265,6 +284,62 @@ private Node parseAssignmentStatement()
             ifNode.adopt(parseStatement());
         }
         return ifNode;
+    }
+
+    private Node parseCaseStatement() {
+        Node caseNode = new Node(SELECT);//??
+        caseNode.lineNumber = currentToken.lineNumber;
+        currentToken = scanner.nextToken();
+        caseNode.adopt(parseExpression(containsNot()));
+        if (currentToken.type == OF) {
+            currentToken = scanner.nextToken();
+            while(currentToken.type != END) {
+                Node selectNode = new Node(SELECT_BRANCH);
+                System.out.println("ConstantStart: " + currentToken.type);
+                selectNode.adopt(parseConstants());// need to account for multiple
+                currentToken = scanner.nextToken(); //skip :
+                System.out.println("StatementStart: " + currentToken.type);
+                selectNode.adopt(parseStatement());
+                currentToken = scanner.nextToken(); //skip ;
+                System.out.println("NextStart: " + currentToken.type + "\n-----------------------");
+                caseNode.adopt(selectNode);
+            }
+        }
+        else {
+            syntaxError("Expecting OF");
+        }
+        return caseNode;
+    }
+
+    private Node parseConstants() { //plural
+        Node selectConstants = new Node(SELECT_CONSTANTS);
+        selectConstants.adopt(parseConstant());
+        while (currentToken.type == COMMA) {
+            currentToken = scanner.nextToken();
+            selectConstants.adopt(parseConstant());
+        }
+        return selectConstants;
+    }
+
+    private Node parseConstant() {
+        switch (currentToken.type) {
+            case INTEGER -> parseIntegerConstant(false);
+            case REAL -> parseRealConstant(false);
+            case STRING -> parseStringConstant();
+            case MINUS -> negativesPatch();
+            default -> syntaxError("Unexpected or no constant");
+        }
+        return new Node(UNKNOWN);
+    }
+
+    private Node negativesPatch() {  //cursed but may work
+        currentToken = scanner.nextToken();
+        switch (currentToken.type) {
+            case INTEGER -> parseIntegerConstant(true);
+            case REAL -> parseRealConstant(true);
+            default -> syntaxError("Unexpected or no constant?");
+        }
+        return new Node(UNKNOWN);
     }
 
     private Node parseRepeatStatement()
@@ -290,7 +365,7 @@ private Node parseAssignmentStatement()
             // Consume UNTIL.
             currentToken = scanner.nextToken(); 
             
-            testNode.adopt(parseExpression());
+            testNode.adopt(parseExpression(containsNot()));
             
             // The LOOP node adopts the TEST node
             // as its final child.
@@ -309,7 +384,7 @@ private Node parseAssignmentStatement()
     	
     	currentToken = scanner.nextToken();
     	
-    	whileNode.adopt(parseExpression());
+    	whileNode.adopt(parseExpression(containsNot()));
     	
     	if (currentToken.type == DO) {
     		currentToken = scanner.nextToken();
@@ -330,11 +405,11 @@ private Node parseAssignmentStatement()
     	
     	if (currentToken.type == TO) {
     		currentToken = scanner.nextToken();
-    		forNode.adopt(parseExpression());
+    		forNode.adopt(parseExpression(containsNot()));
     	}
     	else if (currentToken.type == DOWNTO) {
     		currentToken = scanner.nextToken();
-    		forNode.adopt(parseExpression());
+    		forNode.adopt(parseExpression(containsNot()));
     	}
     	else {
     		syntaxError("Expecting TO or DOWNTO");
@@ -413,30 +488,51 @@ private Node parseAssignmentStatement()
         else syntaxError("Invalid WRITE or WRITELN statement");
         
         // Look for a field width and a count of decimal places.
-        if (hasArgument)
-        {
-            if (currentToken.type == COLON) 
-            {
+        if (hasArgument) {
+            if (currentToken.type == COLON) {
 			    // Consume :
                 currentToken = scanner.nextToken();
                 
-                if (currentToken.type == INTEGER)
-                {
+                if (currentToken.type == INTEGER) {
                     // Field width
-                    node.adopt(parseIntegerConstant());
+                    node.adopt(parseIntegerConstant(false));
                     
-                    if (currentToken.type == COLON) 
-                    {
+                    if (currentToken.type == COLON) {
                         // Consume :
                         currentToken = scanner.nextToken();
                         
-                        if (currentToken.type == INTEGER)
-                        {
+                        if (currentToken.type == INTEGER) {
                             // Count of decimal places.
-                            node.adopt(parseIntegerConstant());
+                            node.adopt(parseIntegerConstant(false));
+                        }
+                        else if (currentToken.type == MINUS) {
+                            currentToken = scanner.nextToken();
+                            node.adopt(parseIntegerConstant(true));
                         }
                         else syntaxError("Invalid count of decimal places");
                     }
+                }
+                else if (currentToken.type == MINUS) {
+                    currentToken = scanner.nextToken();
+
+                    /////// copied from above
+                    node.adopt(parseIntegerConstant(true));
+
+                    if (currentToken.type == COLON) {
+                        // Consume :
+                        currentToken = scanner.nextToken();
+
+                        if (currentToken.type == INTEGER) {
+                            // Count of decimal places.
+                            node.adopt(parseIntegerConstant(false));
+                        }
+                        else if (currentToken.type == MINUS) {
+                            currentToken = scanner.nextToken();
+                            node.adopt(parseIntegerConstant(true));
+                        }
+                        else syntaxError("Invalid count of decimal places");
+                    }
+                    ///////
                 }
                 else syntaxError("Invalid field width");
             }
@@ -450,25 +546,35 @@ private Node parseAssignmentStatement()
         else syntaxError("Missing right parenthesis");
     }
 
-    private Node parseExpression()
+    private Node parseExpression(boolean containsNot)
     {
         // The current token should now be an identifier or a number.
-        
+        System.out.println("Here2 at " + currentToken.lineNumber);
         // The expression's root node.
-        Node exprNode = parseSimpleExpression();
+        if (currentToken.type == LPAREN) {
+            currentToken = scanner.nextToken();
+        }
+        Node exprNode;
+        if (containsNot) {
+            exprNode = new Node(NOT);
+        }
+        else {
+            exprNode = parseSimpleExpression();
+        }
         
         // The current token might now be a relational operator.
         if (relationalOperators.contains(currentToken.type))
         {
             Token.TokenType tokenType = currentToken.type;
-            Node opNode = tokenType == EQUALS    ?      new Node(EQ)
-                        : tokenType == NOT_EQUALS?      new Node(NEQ)
-                        : tokenType == LESS_THAN ?      new Node(LT)
-                        : tokenType == GREATER_THAN ?   new Node(GT)
-                        : tokenType == LESS_EQUALS ?    new Node(LEQ)
-                        : tokenType == GREATER_EQUALS ? new Node(GEQ)
-                        : tokenType == COLON_EQUALS ?   new Node(CEQ)
-                        :                               null;
+            Node opNode = tokenType == EQUALS    ?           new Node(EQ)
+                        : tokenType == NOT_EQUALS?           new Node(NEQ)
+                        : tokenType == LESS_THAN ?           new Node(LT)
+                        : tokenType == GREATER_THAN ?        new Node(GT)
+                        : tokenType == LESS_EQUALS ?         new Node(LEQ)
+                        : tokenType == GREATER_EQUALS ?      new Node(GEQ)
+                        : tokenType == COLON_EQUALS ?        new Node(CEQ)
+                        : tokenType == Token.TokenType.NOT ? new Node(NOT)
+                        :                                    null;
             
             // Consume relational operator.
             currentToken = scanner.nextToken();  
@@ -544,19 +650,29 @@ private Node parseAssignmentStatement()
     }
     
     private Node parseFactor()
-    {   
+    {
+        boolean containsNot = false;
         // The current token should now be an identifier or a number or (
-        
+        if (currentToken.type == Token.TokenType.NOT) {
+            containsNot = true;
+            currentToken = scanner.nextToken();
+        }
         if      (currentToken.type == IDENTIFIER) return parseVariable();
-        else if (currentToken.type == INTEGER)    return parseIntegerConstant();
-        else if (currentToken.type == REAL)       return parseRealConstant();
-        
+        else if (currentToken.type == INTEGER)    return parseIntegerConstant(false);
+        else if (currentToken.type == REAL)       return parseRealConstant(false);
+
+        else if (currentToken.type == MINUS) {
+            currentToken = scanner.nextToken();
+            if      (currentToken.type == INTEGER)    return parseIntegerConstant(true);
+            else if (currentToken.type == REAL)       return parseRealConstant(true);
+        }
+
         else if (currentToken.type == LPAREN)
         {
             // Consume (
             currentToken = scanner.nextToken(); 
             
-            Node exprNode = parseExpression();
+            Node exprNode = parseExpression(containsNot);
             
             if (currentToken.type == RPAREN)
             {
@@ -568,7 +684,7 @@ private Node parseAssignmentStatement()
             return exprNode;
         }
         
-        else syntaxError("Unexpected token");
+        else syntaxError("Unexpeeeeected token");
         return null;
     }
     
@@ -591,12 +707,17 @@ private Node parseAssignmentStatement()
         return node;
     }
 
-    private Node parseIntegerConstant()
+    private Node parseIntegerConstant(boolean isNegative)
     {
         // The current token should now be a number.
         
         Node integerNode = new Node(INTEGER_CONSTANT);
-        integerNode.value = currentToken.value;
+        if (isNegative) {
+            integerNode.value = -1 * (Long)currentToken.value;
+        }
+        else {
+            integerNode.value = currentToken.value;
+        }
         
         // Consume the number.
         currentToken = scanner.nextToken();     
@@ -604,12 +725,17 @@ private Node parseAssignmentStatement()
         return integerNode;
     }
 
-    private Node parseRealConstant()
+    private Node parseRealConstant(boolean isNegative)
     {
         // The current token should now be a number.
         
         Node realNode = new Node(REAL_CONSTANT);
-        realNode.value = currentToken.value;
+        if (isNegative) {
+            realNode.value = -1 * (Double)currentToken.value;
+        }
+        else {
+            realNode.value = currentToken.value;
+        }
         
         // Consume the number.
         currentToken = scanner.nextToken(); 

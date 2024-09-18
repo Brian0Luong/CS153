@@ -275,7 +275,18 @@ public class Token
             case '[' : token.type = TokenType.LBRACKET;   break;
             case ']' : token.type = TokenType.RBRACKET;   break;
             case '^' : token.type = TokenType.CARAT;      break;
-            
+
+//            case '-' : {
+//                char nextChar = source.nextChar();
+//                if (nextChar isnt a number) {
+//                    token.type = TokenType.MINUS;
+//                    break;
+//                }
+//                else {
+//                    parse the number
+//                }
+//            }
+
             case ':' : 
             {
                 // Consume :

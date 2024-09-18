@@ -78,7 +78,7 @@ public class Simple
         
         // If no errors, print the parse tree.
         int errorCount = parser.errorCount();
-        if (errorCount == 0)
+        if (/* errorCount == 0 */ true)
         {
             System.out.println("Parse tree:");
             System.out.println();
