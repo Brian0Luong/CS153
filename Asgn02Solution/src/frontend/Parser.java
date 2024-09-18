@@ -295,13 +295,10 @@ private Node parseAssignmentStatement()
             currentToken = scanner.nextToken();
             while(currentToken.type != END) {
                 Node selectNode = new Node(SELECT_BRANCH);
-                System.out.println("ConstantStart: " + currentToken.type);
                 selectNode.adopt(parseConstants());// need to account for multiple
                 currentToken = scanner.nextToken(); //skip :
-                System.out.println("StatementStart: " + currentToken.type);
                 selectNode.adopt(parseStatement());
                 currentToken = scanner.nextToken(); //skip ;
-                System.out.println("NextStart: " + currentToken.type + "\n-----------------------");
                 caseNode.adopt(selectNode);
             }
         }
@@ -684,7 +681,7 @@ private Node parseAssignmentStatement()
             return exprNode;
         }
         
-        else syntaxError("Unexpeeeeected token");
+        else syntaxError("Unexpected token");
         return null;
     }
     
