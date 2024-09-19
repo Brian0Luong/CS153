@@ -1,0 +1,63 @@
+Parse tree:
+
+<PROGRAM TestCase>
+    <COMPOUND line 3>
+        <ASSIGN line 4>
+            <VARIABLE i />
+            <INTEGER_CONSTANT 3 />
+        </ASSIGN>
+        <ASSIGN line 4>
+            <VARIABLE even />
+            <INTEGER_CONSTANT -999 />
+        </ASSIGN>
+        <ASSIGN line 4>
+            <VARIABLE odd />
+            <INTEGER_CONSTANT -999 />
+        </ASSIGN>
+        <ASSIGN line 4>
+            <VARIABLE prime />
+            <INTEGER_CONSTANT -999 />
+        </ASSIGN>
+        <SELECT line 6>
+            <ADD>
+                <VARIABLE i />
+                <INTEGER_CONSTANT 1 />
+            </ADD>
+            <SELECT_BRANCH>
+                <SELECT_CONSTANTS>
+                    <INTEGER_CONSTANT 1 />
+                </SELECT_CONSTANTS>
+                <ASSIGN line 7>
+                    <VARIABLE j />
+                    <VARIABLE i />
+                </ASSIGN>
+            </SELECT_BRANCH>
+            <SELECT_BRANCH>
+                <SELECT_CONSTANTS>
+                    <INTEGER_CONSTANT -8 />
+                </SELECT_CONSTANTS>
+                <ASSIGN line 8>
+                    <VARIABLE j />
+                    <MULTIPLY>
+                        <INTEGER_CONSTANT 8 />
+                        <VARIABLE i />
+                    </MULTIPLY>
+                </ASSIGN>
+            </SELECT_BRANCH>
+            <SELECT_BRANCH>
+                <SELECT_CONSTANTS>
+                    <INTEGER_CONSTANT 5 />
+                    <INTEGER_CONSTANT 7 />
+                    <INTEGER_CONSTANT 4 />
+                </SELECT_CONSTANTS>
+                <ASSIGN line 9>
+                    <VARIABLE j />
+                    <MULTIPLY>
+                        <INTEGER_CONSTANT 574 />
+                        <VARIABLE i />
+                    </MULTIPLY>
+                </ASSIGN>
+            </SELECT_BRANCH>
+        </SELECT>
+    </COMPOUND>
+</PROGRAM>
