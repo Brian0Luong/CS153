@@ -250,6 +250,7 @@ public class Executor
             case ADD :      value = value1 + value2; break;
             case SUBTRACT : value = value1 - value2; break;
             case MULTIPLY : value = value1 * value2; break;
+            case INTDIV : value = value1 / value2; break;
                 
             case DIVIDE :
             {
