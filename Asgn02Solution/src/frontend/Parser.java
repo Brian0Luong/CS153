@@ -328,24 +328,22 @@ private Node parseAssignmentStatement()
     }
 
     private Node parseConstant() {
-        switch (currentToken.type) {
+        return switch (currentToken.type) {
             case INTEGER -> parseIntegerConstant(false);
             case REAL -> parseRealConstant(false);
             case STRING -> parseStringConstant();
             case MINUS -> negativesPatch();
-            default -> syntaxError("Unexpected or no constant");
-        }
-        return new Node(UNKNOWN);
+            default -> new Node(UNKNOWN);
+        };
     }
 
     private Node negativesPatch() {  //cursed but may work
         currentToken = scanner.nextToken();
-        switch (currentToken.type) {
+        return switch (currentToken.type) {
             case INTEGER -> parseIntegerConstant(true);
             case REAL -> parseRealConstant(true);
-            default -> syntaxError("Unexpected or no constant?");
-        }
-        return new Node(UNKNOWN);
+            default -> new Node(UNKNOWN);
+        };
     }
 
     private Node parseRepeatStatement()
