@@ -129,6 +129,7 @@ public class Parser
         simpleExpressionOperators.add(PLUS);
         simpleExpressionOperators.add(MINUS);
         simpleExpressionOperators.add(DIV);
+        simpleExpressionOperators.add(SLASH);
         
         termOperators.add(STAR);
         termOperators.add(SLASH);
@@ -630,6 +631,7 @@ private Node parseAssignmentStatement()
         {
             Node opNode = currentToken.type == PLUS ? new Node(ADD)
                         : currentToken.type == MINUS ? new Node(SUBTRACT)
+                        : currentToken.type == SLASH ? new Node(DIVIDE)
                         : currentToken.type == DIV ? new Node(INTDIV)
                         :                               null;
             // consume the operator.
@@ -641,8 +643,31 @@ private Node parseAssignmentStatement()
             opNode.adopt(simpExprNode);
             opNode.adopt(parseTerm());
             simpExprNode = opNode;
+
+            simpExprNode = parseOuterExpression(simpExprNode);
         }
         
+        return simpExprNode;
+    }
+
+    private Node parseOuterExpression(Node simplExprNode) {
+        Node simpExprNode = simplExprNode; //chaos
+        if (currentToken.type == RPAREN) { //only works for cases of one expression outside of paren after  eg: (x * y)/z   because refactoring to properly check nesting/chains isnt doable under time
+            currentToken = scanner.nextToken();
+            if (simpleExpressionOperators.contains(currentToken.type) || termOperators.contains(currentToken.type)) { // WHY ARE TERMS AND EXPRESSIONS SEPARATE
+                Node outerOp = currentToken.type == PLUS ? new Node(ADD)
+                        : currentToken.type == MINUS ? new Node(SUBTRACT)
+                        : currentToken.type == DIV ? new Node(INTDIV)
+                        : currentToken.type == SLASH ? new Node(DIVIDE)
+                        : currentToken.type == STAR ? new Node(MULTIPLY)
+                        :                               null;
+
+                currentToken = scanner.nextToken();
+                outerOp.adopt(simpExprNode);
+                outerOp.adopt(parseTerm());
+                simpExprNode = outerOp;
+            }
+        }
         return simpExprNode;
     }
     
@@ -668,6 +693,8 @@ private Node parseAssignmentStatement()
             opNode.adopt(termNode);
             opNode.adopt(parseFactor());
             termNode = opNode;
+
+            termNode = parseOuterExpression(termNode);
         }
         
         return termNode;
