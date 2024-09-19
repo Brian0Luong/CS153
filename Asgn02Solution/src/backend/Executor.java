@@ -51,9 +51,9 @@ public class Executor
             case WRITELN :  return visitStatement(node);
             
             case WHILE :    return visitWhile(node);
-            //case IF :    return visitIf(node);
+            case IF :    return visitIf(node);
             case FOR :    return visitFor(node);
-            //case CASE :    return visitCase(node);
+            case CASE :    return visitCase(node);
 
             case TEST:      return visitTest(node);
             
@@ -69,26 +69,26 @@ public class Executor
     
     
     private Object visitWhile(Node whileNode){
-        for(Node child : whileNode.children) {visit(child);}
-
+        for(Node child : whileNode.children){
+            visit(child);
+        }
         return null;
     }
 
-    // private Object visitIf(Node ifNode){
-    //     for(Node child : ifNode.children) visit(child);
-    //     return null;
-    // }
+     private Object visitIf(Node ifNode){
+         for(Node child : ifNode.children) visit(child);
+         return null;
+    }
 
     private Object visitFor(Node forNode){
         for(Node child : forNode.children) visit(child);
         return null;
     }
 
-    // private Object visitCase(Node caseNode){
-    //     for(Node child : caseNode.children) visit(child);
-
-    //     return null;
-    // }
+    private Object visitCase(Node caseNode){
+        System.out.println("Num children: " + caseNode.children.size());
+        return null;
+    }
 
     private Object visitStatement(Node statementNode)
     {
