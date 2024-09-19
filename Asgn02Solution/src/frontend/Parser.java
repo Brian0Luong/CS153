@@ -12,6 +12,8 @@ import java.util.HashSet;
 
 import intermediate.*;
 import static frontend.Token.TokenType.*;
+import static frontend.Token.TokenType.AND;
+import static frontend.Token.TokenType.OR;
 import static intermediate.Node.NodeType.*;
 import static intermediate.Node.NodeType.CASE;
 import static intermediate.Node.NodeType.IF;
@@ -558,12 +560,10 @@ private Node parseAssignmentStatement()
             currentToken = scanner.nextToken();
         }
         Node exprNode;
-        if (containsNot) {
-            exprNode = new Node(NOT);
-        }
-        else {
-            exprNode = parseSimpleExpression();
-        }
+
+
+        exprNode = parseSimpleExpression();
+
         
         // The current token might now be a relational operator.
         if (relationalOperators.contains(currentToken.type))
@@ -592,7 +592,30 @@ private Node parseAssignmentStatement()
                 exprNode = opNode;
             }
         }
-        
+        if (currentToken.type == RPAREN) {
+            currentToken = scanner.nextToken();
+        }
+
+        if (containsNot) {
+            Node hold = exprNode;
+            exprNode = new Node(NOT);
+            exprNode.adopt(hold);
+        }
+
+        if (currentToken.type == AND || currentToken.type == OR) {
+            Node hold = exprNode;
+
+            if (currentToken.type == AND) exprNode = new Node(Node.NodeType.AND);
+            else exprNode = new Node(Node.NodeType.OR);
+
+            currentToken = scanner.nextToken();
+
+            exprNode.adopt(hold);
+            exprNode.adopt(parseExpression(containsNot()));
+        }
+
+
+
         return exprNode;
     }
     

@@ -19,6 +19,8 @@ public class Node
 
         IF, WHILE, FOR, CASE, CEQ,
 
+        AND, OR,
+
         SELECT, SELECT_BRANCH, SELECT_CONSTANTS, UNKNOWN //unknown is a placeholder node if an error occurs
     }
 
