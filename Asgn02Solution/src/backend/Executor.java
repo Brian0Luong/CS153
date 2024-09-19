@@ -46,10 +46,15 @@ public class Executor
             
             case COMPOUND : 
             case ASSIGN :   
-            case LOOP : 
+            case LOOP :     
             case WRITE :
             case WRITELN :  return visitStatement(node);
             
+            case WHILE :    return visitWhile(node);
+            //case IF :    return visitIf(node);
+            case FOR :    return visitFor(node);
+            //case CASE :    return visitCase(node);
+
             case TEST:      return visitTest(node);
             
             default :       return visitExpression(node);
@@ -62,6 +67,29 @@ public class Executor
         return visit(compoundNode);
     }
     
+    
+    private Object visitWhile(Node whileNode){
+        for(Node child : whileNode.children) {visit(child);}
+
+        return null;
+    }
+
+    // private Object visitIf(Node ifNode){
+    //     for(Node child : ifNode.children) visit(child);
+    //     return null;
+    // }
+
+    private Object visitFor(Node forNode){
+        for(Node child : forNode.children) visit(child);
+        return null;
+    }
+
+    // private Object visitCase(Node caseNode){
+    //     for(Node child : caseNode.children) visit(child);
+
+    //     return null;
+    // }
+
     private Object visitStatement(Node statementNode)
     {
         lineNumber = statementNode.lineNumber;

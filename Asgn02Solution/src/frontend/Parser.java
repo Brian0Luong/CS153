@@ -256,7 +256,7 @@ private Node parseAssignmentStatement()
     }
 
     private boolean containsNot() { //if has not, will increment also, kinda also cursed but is to avoid changing more case statements
-        System.out.println("Here at " + currentToken.lineNumber);
+        //System.out.println("Here at " + currentToken.lineNumber);
         boolean containsNot = false;
         if (currentToken.type == Token.TokenType.NOT) {
             containsNot = true;
@@ -546,7 +546,7 @@ private Node parseAssignmentStatement()
     private Node parseExpression(boolean containsNot)
     {
         // The current token should now be an identifier or a number.
-        System.out.println("Here2 at " + currentToken.lineNumber);
+        //System.out.println("Here2 at " + currentToken.lineNumber);
         // The expression's root node.
         if (currentToken.type == LPAREN) {
             currentToken = scanner.nextToken();
